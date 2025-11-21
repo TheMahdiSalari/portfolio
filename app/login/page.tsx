@@ -1,6 +1,8 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+// ✅ تغییر ۱: استفاده از useActionState از پکیج 'react'
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { authenticate } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +12,7 @@ import { AuthParticles } from "@/components/auth-particles";
 import { Loader2, Terminal } from "lucide-react";
 
 function LoginButton() {
+  // useFormStatus همچنان برای دکمه‌های داخل فرم کار می‌کند
   const { pending } = useFormStatus();
   return (
     <Button className="w-full" type="submit" disabled={pending}>
@@ -19,14 +22,14 @@ function LoginButton() {
 }
 
 export default function LoginPage() {
-  const [errorMessage, dispatch] = useFormState(authenticate, undefined);
+  // ✅ تغییر ۲: جایگزینی useFormState با useActionState
+  // ورودی اول: تابع اکشن، ورودی دوم: استیت اولیه
+  const [errorMessage, dispatch] = useActionState(authenticate, undefined);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* پس‌زمینه پارتیکل */}
       <AuthParticles />
 
-      {/* کارت لاگین */}
       <Card className="w-full max-w-md relative z-10 mx-4 backdrop-blur-sm bg-background/80 border-muted/40 shadow-2xl">
         <CardHeader className="space-y-1 text-center items-center">
           <div className="bg-primary text-primary-foreground p-2 rounded-md mb-2">
@@ -38,6 +41,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* اکشن فرم به دیسپچ متصل می‌شود */}
           <form action={dispatch} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">ایمیل</Label>
@@ -49,7 +53,9 @@ export default function LoginPage() {
             </div>
             
             {errorMessage && (
-              <p className="text-sm text-red-500 font-medium">{errorMessage}</p>
+              <p className="text-sm text-red-500 font-medium text-center bg-red-50 p-2 rounded border border-red-100">
+                {errorMessage}
+              </p>
             )}
             
             <LoginButton />

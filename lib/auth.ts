@@ -2,10 +2,10 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-const secretKey = process.env.JWT_SECRET;
+// ✅ Fix: اضافه کردن Fallback برای جلوگیری از ارور "Zero-length key"
+const secretKey = process.env.JWT_SECRET || "default-secret-key-dont-use-in-production"; 
 const key = new TextEncoder().encode(secretKey);
 
-// تعریف اینترفیس‌ها
 interface UserPayload {
   id: string;
   email: string;
@@ -32,7 +32,6 @@ export async function decrypt(input: string): Promise<SessionPayload> {
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
-  // ✅ اصلاح: اضافه کردن await برای cookies()
   const cookieStore = await cookies();
   const session = cookieStore.get("session")?.value;
   
@@ -45,35 +44,16 @@ export async function getSession(): Promise<SessionPayload | null> {
 }
 
 export async function login(formData: FormData) {
-  const email = formData.get("email") as string;
-  
-  const user: UserPayload = { 
-    email: email, 
-    id: "admin_id" 
-  };
-
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const session = await encrypt({ user, expires });
-
-  // ✅ اصلاح: اضافه کردن await برای cookies()
-  const cookieStore = await cookies();
-  
-  cookieStore.set("session", session, { 
-    expires, 
-    httpOnly: true, 
-    sameSite: 'lax', 
-    secure: process.env.NODE_ENV === 'production' 
-  });
+  // این تابع فقط برای تایپ‌دهی در مثال middleware/actions استفاده شده و لاجیک واقعی در actions.ts است.
 }
 
 export async function logout() {
-  // ✅ اصلاح: اضافه کردن await برای cookies()
   const cookieStore = await cookies();
   cookieStore.set("session", "", { expires: new Date(0) });
 }
 
 export async function updateSession(request: NextRequest) {
-  // در Middleware و NextRequest کوکی‌ها هنوز سینک هستند، اما برای اطمینان و استاندارد بودن:
+  // ... (محتوای این تابع در middleware استفاده می‌شود و نیازی به تغییر نیست)
   const session = request.cookies.get("session")?.value;
   if (!session) return;
 

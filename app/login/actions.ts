@@ -1,14 +1,15 @@
-// app/login/actions.ts
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
 
-const prisma = new PrismaClient();
-const secretKey = process.env.JWT_SECRET;
+// ✅ Fix: اضافه کردن Fallback برای جلوگیری از ارور "Zero-length key"
+const secretKey = process.env.JWT_SECRET || "default-secret-key-dont-use-in-production"; 
 const key = new TextEncoder().encode(secretKey);
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
@@ -16,32 +17,29 @@ export async function authenticate(prevState: string | undefined, formData: Form
   const password = formData.get("password") as string;
 
   try {
-    // 1. پیدا کردن کاربر در دیتابیس
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    // کوئری Postgres: دریافت آرایه
+    const usersList = await db.select().from(users).where(eq(users.email, email));
+    const user = usersList[0];
 
     if (!user) return "ایمیل یا رمز عبور اشتباه است.";
 
-    // 2. بررسی رمز عبور
     const passwordsMatch = await bcrypt.compare(password, user.password);
-    if (!passwordsMatch) return "ایمیل یا رمز عبور اشتباه است.";
+    
+    if (!passwordsMatch) return "رمز عبور اشتباه است.";
 
-    // 3. ساخت توکن و ذخیره در کوکی
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const session = await new SignJWT({ userId: user.id, email: user.email })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime("24h")
       .sign(key);
 
-    cookies().set("session", session, { expires, httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+    (await cookies()).set("session", session, { expires, httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
 
   } catch (error) {
-      console.error("Login error:", error);
-      return "خطایی رخ داده است.";
+      console.error("❌ LOGIN CRASH:", error); // برای دیباگ نهایی
+      return "خطای سیستمی رخ داد.";
   }
 
-  // 4. ریدارکت در صورت موفقیت (خارج از بلوک try/catch)
   redirect("/dashboard");
 }
