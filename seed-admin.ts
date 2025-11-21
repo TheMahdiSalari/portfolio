@@ -1,39 +1,32 @@
-import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcryptjs';
 import 'dotenv/config';
-
-// ✅ اصلاح شد: استفاده از datasources.db.url
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-});
+import { db } from './lib/db';
+import { users } from './db/schema';
+import { hash } from 'bcryptjs';
+import { eq } from 'drizzle-orm';
 
 async function main() {
-  const email = "admin@example.com"; 
+  const email = "admin@example.com";
   const password = "password123";
+  
+  console.log("⏳ Deleting existing admin...");
+  // اول یوزر قبلی رو پاک می‌کنیم
+  await db.delete(users).where(eq(users.email, email));
 
+  console.log("⏳ Creating new admin with fresh password...");
   const hashedPassword = await hash(password, 10);
 
-  const user = await prisma.user.upsert({
-    where: { email: email },
-    update: {},
-    create: {
-      email: email,
-      password: hashedPassword,
-    },
+  // دوباره می‌سازیم
+  await db.insert(users).values({
+    email,
+    password: hashedPassword,
   });
 
-  console.log("✅ Admin user created successfully");
+  console.log("✅ Admin reset successfully!");
+  console.log("📧 Email:", email);
+  console.log("🔑 Password:", password);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((e) => {
+  console.error("❌ Error:", e);
+  process.exit(1);
+});
