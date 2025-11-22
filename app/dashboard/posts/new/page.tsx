@@ -1,7 +1,6 @@
 "use client";
 
-// ✅ تغییر ۱: ایمپورت useActionState از 'react'
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createPost, type PostFormState } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -10,16 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, X, Image as ImageIcon } from "lucide-react";
+// ✅ ایمپورت ابزار آپلود
+import { UploadDropzone } from "@/lib/uploadthing";
+// برای نمایش عکس
+import Image from "next/image";
 
-// وضعیت اولیه برای فرم
 const initialState: PostFormState = {
   message: "",
   status: undefined,
 };
 
 function SubmitButton() {
-  // useFormStatus همچنان از react-dom می‌آید و برای دکمه داخل فرم استفاده می‌شود
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending} className="w-full md:w-auto md:min-w-[150px]">
@@ -29,8 +30,9 @@ function SubmitButton() {
 }
 
 export default function NewPostPage() {
-  // ✅ تغییر ۲: استفاده از useActionState به جای useFormState
   const [state, dispatch] = useActionState(createPost, initialState);
+  // ✅ استیت برای ذخیره لینک عکس آپلود شده
+  const [imageUrl, setImageUrl] = useState<string>("");
 
   return (
     <div className="grid gap-6">
@@ -38,7 +40,6 @@ export default function NewPostPage() {
         <h1 className="text-lg font-semibold md:text-2xl">افزودن پست/پروژه جدید</h1>
       </div>
       
-      {/* اتصال فرم به دیسپچ اکشن */}
       <form action={dispatch}>
         <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
           
@@ -57,7 +58,6 @@ export default function NewPostPage() {
               <div className="space-y-2">
                 <Label htmlFor="slug">نامک / Slug (اجباری - یکتا)</Label>
                 <Input id="slug" name="slug" placeholder="my-project-slug" required className="font-mono text-sm" />
-                <p className="text-xs text-muted-foreground">این قسمت در آدرس URL استفاده می‌شود.</p>
               </div>
 
               <div className="space-y-2">
@@ -66,42 +66,88 @@ export default function NewPostPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="content">محتوای کامل (اجباری)</Label>
-                <Textarea id="content" name="content" placeholder="متن کامل پست یا توضیحات پروژه..." rows={15} required className="font-mono" />
+                <Label htmlFor="content">محتوای کامل (مارک‌داون)</Label>
+                <Textarea id="content" name="content" placeholder="متن کامل پست با فرمت Markdown..." rows={15} required className="font-mono" />
+                <p className="text-xs text-muted-foreground">
+                  می‌توانید از **متن بولد**، `کد` و لیست‌ها استفاده کنید.
+                </p>
               </div>
             </CardContent>
           </Card>
 
           {/* ستون کناری (راست) */}
           <div className="space-y-6">
+            
+            {/* کارت آپلود تصویر */}
+            <Card className="overflow-hidden">
+              <CardHeader>
+                <CardTitle>تصویر شاخص</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* ✅ اینپوت مخفی برای ارسال لینک عکس به سرور اکشن */}
+                <input type="hidden" name="imageUrl" value={imageUrl} />
+
+                {imageUrl ? (
+                  <div className="relative aspect-video w-full rounded-md overflow-hidden border">
+                    <Image 
+                      src={imageUrl} 
+                      alt="Preview" 
+                      fill 
+                      className="object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8 shadow-md"
+                      onClick={() => setImageUrl("")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <UploadDropzone
+                    endpoint="imageUploader"
+                    onClientUploadComplete={(res) => {
+                      // وقتی آپلود تموم شد، لینک رو میگیریم
+                      if (res && res[0]) {
+                        setImageUrl(res[0].url);
+                        console.log("Upload Completed:", res[0].url);
+                      }
+                    }}
+                    onUploadError={(error: Error) => {
+                      alert(`ERROR! ${error.message}`);
+                    }}
+                    appearance={{
+                      container: "border-dashed border-2 border-muted-foreground/25 bg-muted/50 h-40",
+                      label: "text-muted-foreground text-sm",
+                      allowedContent: "text-xs text-muted-foreground/70"
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
-                <CardTitle>تنظیمات و مدیا</CardTitle>
+                <CardTitle>تنظیمات</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="flex items-center justify-between border p-4 rounded-lg">
                   <div className="space-y-0.5">
                     <Label htmlFor="published" className="text-base">انتشار نهایی</Label>
-                    <p className="text-sm text-muted-foreground">آیا این پست در سایت نمایش داده شود؟</p>
+                    <p className="text-sm text-muted-foreground">نمایش در سایت؟</p>
                   </div>
                   <Switch id="published" name="published" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="imageUrl">آدرس تصویر شاخص</Label>
-                  <Input id="imageUrl" name="imageUrl" placeholder="/images/projects/project1.jpg" />
-                  <p className="text-xs text-muted-foreground">فایل تصویر را در پوشه public کپی کنید و آدرسش را اینجا بنویسید.</p>
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="tags">تگ‌ها</Label>
-                  <Input id="tags" name="tags" placeholder="Next.js, React, Tailwind" />
-                  <p className="text-xs text-muted-foreground">تگ‌ها را با کاما جدا کنید.</p>
+                  <Input id="tags" name="tags" placeholder="Next.js, React" />
                 </div>
               </CardContent>
             </Card>
              
-             {/* نمایش پیام‌های خطا یا موفقیت */}
              {state.message && (
                 <p className={`text-sm font-medium p-3 rounded text-center border ${
                   state.status === 'error' 
