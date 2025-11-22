@@ -48,10 +48,10 @@ export default async function ProjectsPage() {
           هنوز پروژه‌ای منتشر نشده است.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 ">
           {projects.map((project, index) => (
             <FadeIn key={project.id} delay={index * 0.1} className="h-full">
-              <Card className="flex flex-col h-full overflow-hidden border-muted bg-card/50 transition-all hover:bg-card hover:shadow-md group">
+              <Card className="flex flex-col h-full overflow-hidden border-muted bg-card/50 transition-all hover:bg-card hover:shadow-md group pt-0">
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
                   {project.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
