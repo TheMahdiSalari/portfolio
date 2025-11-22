@@ -11,14 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Eye } from "lucide-react";
-import { deletePost } from "./actions";
+import { PlusCircle } from "lucide-react";
+// ✅ کامپوننت جدید را ایمپورت کن
+import { PostActions } from "@/components/post-actions";
 
 export default async function PostsPage() {
   const allPosts = await db.select().from(posts).orderBy(desc(posts.createdAt));
@@ -68,51 +63,13 @@ export default async function PostsPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {/* ✅ فیکس ۱: چک کردن نال بودن تاریخ */}
                     {post.createdAt 
                       ? new Date(post.createdAt).toLocaleDateString("fa-IR") 
                       : "—"}
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">منو</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/projects`} className="flex w-full items-center gap-2 cursor-pointer">
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                            مشاهده
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/posts/${post.id}/edit`} className="flex w-full items-center gap-2 cursor-pointer">
-                            <Pencil className="h-4 w-4 text-muted-foreground" />
-                            ویرایش
-                          </Link>
-                        </DropdownMenuItem>
-                        
-                        {/* برای جلوگیری از بسته شدن منو موقع کلیک، از onSelect استفاده میکنیم */}
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-50">
-                          {/* ✅ فیکس ۲: رپ کردن اکشن داخل یک تابع async که void برمی‌گرداند */}
-                          <form 
-                            action={async () => {
-                              "use server";
-                              await deletePost(post.id);
-                            }} 
-                            className="w-full"
-                          >
-                             <button type="submit" className="flex w-full items-center gap-2 cursor-pointer">
-                                <Trash2 className="h-4 w-4" />
-                                حذف
-                             </button>
-                          </form>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {/* ✅ استفاده از کامپوننت کلاینتی */}
+                    <PostActions postId={post.id} />
                   </TableCell>
                 </TableRow>
               ))
