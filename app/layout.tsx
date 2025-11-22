@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Navbar } from "@/components/navbar";
-import { ParticlesBackground } from "@/components/particles-background"; // ✅ 1. ایمپورت شد
+// ❌ دقت کن: اینجا دیگه خبری از ParticlesBackground و Navbar نیست
 
-const vazir = Vazirmatn({
+const vazir = Vazirmatn({ 
   subsets: ["arabic"],
-  variable: "--font-sans",
+  variable: "--font-sans", 
   display: "swap",
 });
 
@@ -25,25 +24,12 @@ export default function RootLayout({
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased text-foreground relative", // relative اضافه شد برای اطمینان
+          "min-h-screen bg-background font-sans antialiased text-foreground",
           vazir.variable
         )}
       >
-        {/* ✅ 2. پارتیکل‌ها اینجا قرار می‌گیرند، پشت همه چیز */}
-        <ParticlesBackground />
-        
-        <div className="relative flex min-h-screen flex-col">
-          <Navbar />
-          
-          <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl relative z-10">
-            {/* z-10 برای اینکه محتوا حتما روی پارتیکل‌ها باشه */}
-            {children}
-          </main>
-          
-          <footer className="border-t py-6 text-center text-sm text-muted-foreground relative z-10">
-            © {new Date().getFullYear()} طراحی شده با ❤️ و Next.js توسط مهدی سالاری
-          </footer>
-        </div>
+        {/* این فایل فقط HTML و Body را مدیریت می‌کند */}
+        {children}
       </body>
     </html>
   );

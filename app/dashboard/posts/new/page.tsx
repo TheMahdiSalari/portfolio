@@ -1,7 +1,8 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
-// ایمپورت کردن تایپ جدید
+// ✅ تغییر ۱: ایمپورت useActionState از 'react'
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { createPost, type PostFormState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +12,14 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Save } from "lucide-react";
 
-// تعریف وضعیت اولیه با تایپ صحیح
+// وضعیت اولیه برای فرم
 const initialState: PostFormState = {
   message: "",
-  status: undefined, // یا "success" | "error"
+  status: undefined,
 };
 
 function SubmitButton() {
+  // useFormStatus همچنان از react-dom می‌آید و برای دکمه داخل فرم استفاده می‌شود
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending} className="w-full md:w-auto md:min-w-[150px]">
@@ -27,8 +29,8 @@ function SubmitButton() {
 }
 
 export default function NewPostPage() {
-  // حالا useFormState تایپ‌سیف است و نیازی به any نیست
-  const [state, dispatch] = useFormState(createPost, initialState);
+  // ✅ تغییر ۲: استفاده از useActionState به جای useFormState
+  const [state, dispatch] = useActionState(createPost, initialState);
 
   return (
     <div className="grid gap-6">
@@ -36,6 +38,7 @@ export default function NewPostPage() {
         <h1 className="text-lg font-semibold md:text-2xl">افزودن پست/پروژه جدید</h1>
       </div>
       
+      {/* اتصال فرم به دیسپچ اکشن */}
       <form action={dispatch}>
         <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
           
@@ -54,6 +57,7 @@ export default function NewPostPage() {
               <div className="space-y-2">
                 <Label htmlFor="slug">نامک / Slug (اجباری - یکتا)</Label>
                 <Input id="slug" name="slug" placeholder="my-project-slug" required className="font-mono text-sm" />
+                <p className="text-xs text-muted-foreground">این قسمت در آدرس URL استفاده می‌شود.</p>
               </div>
 
               <div className="space-y-2">
@@ -63,7 +67,7 @@ export default function NewPostPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="content">محتوای کامل (اجباری)</Label>
-                <Textarea id="content" name="content" placeholder="متن کامل پست..." rows={15} required className="font-mono" />
+                <Textarea id="content" name="content" placeholder="متن کامل پست یا توضیحات پروژه..." rows={15} required className="font-mono" />
               </div>
             </CardContent>
           </Card>
@@ -78,7 +82,7 @@ export default function NewPostPage() {
                  <div className="flex items-center justify-between border p-4 rounded-lg">
                   <div className="space-y-0.5">
                     <Label htmlFor="published" className="text-base">انتشار نهایی</Label>
-                    <p className="text-sm text-muted-foreground">نمایش در سایت؟</p>
+                    <p className="text-sm text-muted-foreground">آیا این پست در سایت نمایش داده شود؟</p>
                   </div>
                   <Switch id="published" name="published" />
                 </div>
@@ -86,16 +90,18 @@ export default function NewPostPage() {
                 <div className="space-y-2">
                   <Label htmlFor="imageUrl">آدرس تصویر شاخص</Label>
                   <Input id="imageUrl" name="imageUrl" placeholder="/images/projects/project1.jpg" />
+                  <p className="text-xs text-muted-foreground">فایل تصویر را در پوشه public کپی کنید و آدرسش را اینجا بنویسید.</p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="tags">تگ‌ها</Label>
-                  <Input id="tags" name="tags" placeholder="Next.js, React" />
+                  <Input id="tags" name="tags" placeholder="Next.js, React, Tailwind" />
+                  <p className="text-xs text-muted-foreground">تگ‌ها را با کاما جدا کنید.</p>
                 </div>
               </CardContent>
             </Card>
              
-             {/* نمایش پیام خطا یا موفقیت */}
+             {/* نمایش پیام‌های خطا یا موفقیت */}
              {state.message && (
                 <p className={`text-sm font-medium p-3 rounded text-center border ${
                   state.status === 'error' 
